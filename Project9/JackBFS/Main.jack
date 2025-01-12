@@ -1,0 +1,32 @@
+class Main{
+
+    function void main(){
+        var boolean exit;
+        var boolean running;
+        var char key;
+        var BFS16 BFSfromCenter;
+        do Output.printString("        Press b to start BFS simulation");
+        do Output.println();
+       
+        let exit = false;
+        while (~exit) {
+            // waits for a key to be pressed.
+            while ((key = 0) & (~exit)) {
+                let key = Keyboard.keyPressed();
+            }
+
+            if(key = 98 & ~running) {
+                let running = true;
+                do Screen.clearScreen();
+                let BFSfromCenter = BFS16.new(20496);
+                do BFSfromCenter.runBFS();
+                do Output.printString("Done with simulation");
+                do Output.println();
+            }
+
+        }
+        do Output.printString("Bye");
+        
+        return;
+    }
+}

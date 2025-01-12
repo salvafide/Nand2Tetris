@@ -1,0 +1,243 @@
+// This file is part of www.nand2tetris.org
+// and the book "The Elements of Computing Systems"
+// by Nisan and Schocken, MIT Press.
+// File name: projects/12/Screen.jack
+/**
+ * A library of functions for displaying graphics on the screen.
+ * The Hack physical screen consists of 512 rows (indexed 0..511, top to bottom)
+ * of 256 pixels each (indexed 0..255, left to right). The top left pixel on 
+ * the screen is indexed (0,0).
+ */
+class Screen {
+    static Array screenPtr;
+    static boolean CurrentColor;
+    static Array powersOfTwo;
+
+    /** Initializes the Screen. */
+    function void init() {
+        var int i, y, n;
+
+        // Grab location of screen
+        let screenPtr = 16384; // Screen = 16384 - 24575
+        let CurrentColor = true;
+        
+        // Fill powersOfTwo
+        let n = 16;
+        let powersOfTwo = Array.new(n);
+        let i = 0;
+        let y = 1;
+        while(i < n){
+            let powersOfTwo[i] = y;
+            let y = y + y;
+            let i = i + 1;
+        }
+        return;
+    }
+
+    /** Erases the entire screen. */
+    function void clearScreen() {
+        var int i;
+        let i = 0;
+        while (i < 8191){
+            let screenPtr[i] = false;
+            let i = i + 1;
+        }
+        return;
+    }
+
+    /** Sets the current color, to be used for all subsequent drawXXX commands.
+     *  Black is represented by true, white by false. */
+    function void setColor(boolean b) {
+        let CurrentColor = b;
+        return;
+    }
+
+    /** Draws the (x,y) pixel, using the current color. */
+    function void drawPixel(int x, int y) {
+        var int address, value, mask;
+        let address = (y * 32) + (x / 16);
+        // Make a mask for specific bit that is being selected
+        // bitwise operation x & 15 is functionally equivalent to x % 16
+        // 15 = 1111b, 15 & x cuts off bits past first 4, trimming value to 0-15
+        let mask = powersOfTwo[x & 15];
+
+        if (CurrentColor){
+            // An | op where the bit is 1 will always result in 1 -> black
+            let screenPtr[address] = screenPtr[address] | mask;
+        } else{
+            // An & op where the bit is 0 will always result in 0 -> white
+            let screenPtr[address] = screenPtr[address] & ~mask;
+        }
+        return;
+    }
+
+    /** Draws a line from pixel (x1,y1) to pixel (x2,y2), using the current color. */
+    function void drawLine(int x1, int y1, int x2, int y2) {
+        var int a, b, diff, dx, dy, tmp;
+       
+        // If user inputs right coordinate first flip them
+        if (x1 > x2) {
+            let tmp = x1;
+            let x1 = x2;
+            let x2 = tmp;
+
+            let tmp = y1;
+            let y1 = y2;
+            let y2 = tmp;
+        }
+
+        if (x1 = x2) {
+            do Screen.drawVertLine(x1, y1, y2);
+            return;
+        }
+        if (y1 = y2) {
+            do Screen.drawHorLine(x1, x2, y1);
+            return;
+        }
+
+        let dx = x2 - x1;
+        let dy = y2 - y1;
+        let a = 0; // Pixels we have moved right
+        let b = 0; // Pixels moved down
+        let diff = 0; // a*dy-b*dx : b/a > dy/dx = a*dy < b*dx -> if a increases we get another dy
+        if (dy > 0){
+            while( (a < (dx + 1)) & (b < (dy + 1)) ) {
+                do Screen.drawPixel(x1 + a, y1 + b);
+                // move right?
+                if (diff < 0) {
+                    let a = a + 1; // Going right
+                    let diff = diff + dy;
+                }else{
+                    let b = b + 1; // Going down
+                    let diff = diff - dx;
+                }
+            }
+        } else { // dy < 0
+            // Flip comparison and subract 1 from b, which is going up on the screen
+            // i.e p1(1,5) p2(4,1) -> dy = -4
+            while( (a < (dx + 1)) & (b > (dy - 1)) ) {
+                do Screen.drawPixel(x1 + a, y1 + b);
+                // move right?
+                if (diff > 0) {
+                    let a = a + 1; // Going right
+                    let diff = diff + dy;
+                }
+                else {
+                    let b = b - 1; // Going up
+                    let diff = diff + dx;
+                }
+            }
+        }
+        return;
+    }
+
+    /* Draw a line with start and end points on same x coordinate */
+    function void drawVertLine(int x, int y1, int y2) {
+        var int address, tmp, mask;
+
+        // assert that y1 < y2
+        if (y2 < y1){
+            let tmp = y1;
+            let y1 = y2;
+            let y2 = tmp;
+        }
+
+        let address = (y1 * 32) + (x / 16);
+        let mask = powersOfTwo[x & 15];
+        while(y1 < (y2 + 1)){
+            if (CurrentColor) {
+                let screenPtr[address] = screenPtr[address] | mask;
+            } else {
+                let screenPtr[address] = screenPtr[address] & ~mask;
+            }
+            // Every 32 addresses is another row, a.k.a y
+            let address = address + 32;
+            let y1 = y1 + 1;
+        }
+        return;
+    }
+
+    /* Horizontal lines can make use of drawing a memory-word at a time to make more efficient */
+    //      0      1     2     3    4     6     7
+    //  |..x1..|16bits|32bits|... |... |... |..x2..|
+    function void drawHorLine(int x1, int x2, int y) {
+        var int i, tmp, addressA, addressB, mask, maskA, maskB;
+
+        // x1 = x2 -> pixel
+        if (x1 > x2){
+            let tmp = x1;
+            let x1 = x2;
+            let x2 = tmp;
+        }
+
+        // Check for pixels on left and right that are not fill 16-bit words in the line
+        let addressA = (y * 32) + (x1 / 16);
+        let addressB = (y * 32) + (x2 / 16);
+        // Mask out the section of the memory-word that should have pixels
+        let i = x1 & 15; // which bit out of 0-15 in a meory-word
+        let maskA = ~(powersOfTwo[i] - 1); // letf to right pixels, Turn OFF bits leading up to i, i-15 are on
+        let i = x2 & 15; // which bit for right side
+        let maskB = powersOfTwo[i + 1] - 1; // left to right, Turn ON bits 0-i, rest are off
+
+        // Endpoints of line consist of pixels in same memory-word
+        if (addressA = addressB){
+            let mask = maskA & maskB; // Trims the first and last bits that should not be on
+            if(CurrentColor){
+                let screenPtr[addressA] = screenPtr[addressA] | mask;
+            } else{
+                let screenPtr[addressA] = screenPtr[addressA] & ~mask;
+            }
+            return;
+        } else {
+            if(CurrentColor){
+                let screenPtr[addressA] = screenPtr[addressA] | maskA;
+                let screenPtr[addressB] = screenPtr[addressB] | maskB;
+            }else{
+                let screenPtr[addressA] = screenPtr[addressA] & ~maskA;
+                let screenPtr[addressB] = screenPtr[addressB] & ~maskB;
+            }
+        }
+
+        // Now that the start and end words are set, loop through the middle words
+        // Should be chunks of 16bits at a time now
+        if ((addressB - addressA) > 1){ // Need a momory-word gap in between, otherwise start and end are handled
+            let addressA = addressA + 1;
+            while(addressA < addressB) {
+                let screenPtr[addressA] = CurrentColor; // Set whole word
+                let addressA = addressA + 1;
+            }
+        }
+        return;
+    }
+
+    /** Draws a filled rectangle whose top left corner is (x1, y1)
+     *  and bottom right corner is (x2,y2), using the current color. */
+    function void drawRectangle(int x1, int y1, int x2, int y2) {
+        // Assuming that x1 < x2 and y1 < y2 we can do horizontal lines from y1->y2
+        var int i, height;
+        let i = 0;
+        let height = y2 - y1;
+        while(i < (height+1)){
+            do Screen.drawHorLine(x1, x2, y1+i);
+            let i = i + 1;
+        }
+        return;
+    }
+
+    /** Draws a filled circle of radius r<=181 around (x,y), using the current color. */
+    function void drawCircle(int x, int y, int r) {
+        // Limit r to max 181 to prevent overflow
+        // Draw horizontal lines starting at dy = y - r through mid point(x,y) and back out to y + r
+        // Start point x for horizontal line = (x - sqrt(r^2 - dy^2))
+        // End point for x for hor lines = ((x + sqrt(r^2 - dy^2))
+        var int dy, sqrt;
+        let dy = -r;
+        while (dy < (r + 1)){
+            // Compute x values
+            let sqrt = Math.sqrt( ((r*r) - (dy*dy)) );
+            do Screen.drawHorLine( (x - sqrt), (x + sqrt), (y + dy));
+            let dy = dy + 1;
+        }
+        return;
+    }
+}

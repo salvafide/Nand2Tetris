@@ -1,0 +1,76 @@
+class BFS16{
+    field Array queue;
+    field Array visited; // visited[address] = bool
+    field int qPtr;
+    field int qTop;
+    field int qSize;
+    field int currAddr;
+    field int smallestAddr;
+
+    constructor BFS16 new(int sa) {
+        let queue = Array.new(4096);
+        let visited = Array.new(4096);
+        //Push startAddr
+        let currAddr = sa;
+        let qPtr = 0;
+        let queue[qPtr] = sa;
+        // set visited at center value to true
+        let smallestAddr = 18448;
+        let visited[sa - smallestAddr] = true;
+        let qTop = 1;
+        let qSize = 1;
+        return this;
+    }
+
+    method void dispose() {
+        do Memory.deAlloc(this);  // uses an OS routine to recycle the memory held by the object
+        return;
+    }
+
+    method void runBFS(){
+         while(qSize > 0) {
+            // Pop
+            let currAddr = queue[qPtr];
+            let qPtr = qPtr + 1;
+            do Memory.poke(currAddr, -1);
+            // Stop adding once qTop reached end of array
+            if (qTop < 4096){
+                do checkNeighbors();
+            }
+            let qSize = qTop - qPtr;
+        }
+        return;
+    }
+
+    method void checkNeighbors(){
+        // Check if not flipped, push to queue
+        // Half Screen Size = 20496 + 2047 , 20496 - 2048
+       
+        var int v;
+        let v = visited[currAddr - smallestAddr];
+        if( (currAddr - 32) > 18447 & ~(v=1) ){
+            let queue[qTop] = currAddr - 32;
+            let qTop = qTop + 1;
+            let visited[currAddr - smallestAddr] = 1;
+        }
+        
+        if( (currAddr + 32) < 22544 & ~(v=1) ){
+            let queue[qTop] = currAddr + 32;
+            let qTop = qTop + 1;
+            let visited[currAddr - smallestAddr] = 1;
+        }
+        
+        if( (currAddr - 1) > 18447 & ~(v=1) ){
+            let queue[qTop] = currAddr - 1;
+            let qTop = qTop + 1;
+            let visited[currAddr - smallestAddr] = 1;
+        }
+       
+        if( (currAddr + 1) < 22544 & ~(v=1) ){
+            let queue[qTop] = currAddr + 1;
+            let qTop = qTop + 1;
+            let visited[currAddr - smallestAddr] = 1;
+        }
+        return;
+    }
+}

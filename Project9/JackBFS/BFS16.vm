@@ -1,0 +1,261 @@
+function BFS16.new 0
+    push constant 7
+    call Memory.alloc 1
+    pop pointer 0
+    push constant 4096
+    call Array.new 1
+    pop this 0
+    push constant 4096
+    call Array.new 1
+    pop this 1
+    push argument 0
+    pop this 5
+    push constant 0
+    pop this 2
+    push this 2
+    push this 0
+    add
+    push argument 0
+    pop temp 0
+    pop pointer 1
+    push temp 0
+    pop that 0
+    push constant 18448
+    pop this 6
+    push argument 0
+    push this 6
+    sub
+    push this 1
+    add
+    push constant 1
+    neg
+    pop temp 0
+    pop pointer 1
+    push temp 0
+    pop that 0
+    push constant 1
+    pop this 3
+    push constant 1
+    pop this 4
+    push pointer 0
+    return
+function BFS16.dispose 0
+    push argument 0
+    pop pointer 0
+    push pointer 0
+    call Memory.deAlloc 1
+    pop temp 0
+    push constant 0
+    return
+function BFS16.runBFS 0
+    push argument 0
+    pop pointer 0
+label L0
+    push this 4
+    push constant 0
+    gt
+    not
+    if-goto L1
+    push this 2
+    push this 0
+    add
+    pop pointer 1
+    push that 0
+    pop this 5
+    push this 2
+    push constant 1
+    add
+    pop this 2
+    push this 5
+    push constant 1
+    neg
+    call Memory.poke 2
+    pop temp 0
+    push this 3
+    push constant 4096
+    lt
+    not
+    if-goto L3
+    push pointer 0
+    call BFS16.checkNeighbors 1
+    pop temp 0
+    goto L2
+label L3
+label L2
+    push this 3
+    push this 2
+    sub
+    pop this 4
+    goto L0
+label L1
+    push constant 0
+    return
+function BFS16.checkNeighbors 1
+    push argument 0
+    pop pointer 0
+    push this 5
+    push this 6
+    sub
+    push this 1
+    add
+    pop pointer 1
+    push that 0
+    pop local 0
+    push this 5
+    push constant 32
+    sub
+    push constant 18447
+    gt
+    push local 0
+    push constant 1
+    eq
+    not
+    and
+    not
+    if-goto L5
+    push this 3
+    push this 0
+    add
+    push this 5
+    push constant 32
+    sub
+    pop temp 0
+    pop pointer 1
+    push temp 0
+    pop that 0
+    push this 3
+    push constant 1
+    add
+    pop this 3
+    push this 5
+    push this 6
+    sub
+    push this 1
+    add
+    push constant 1
+    pop temp 0
+    pop pointer 1
+    push temp 0
+    pop that 0
+    goto L4
+label L5
+label L4
+    push this 5
+    push constant 32
+    add
+    push constant 22544
+    lt
+    push local 0
+    push constant 1
+    eq
+    not
+    and
+    not
+    if-goto L7
+    push this 3
+    push this 0
+    add
+    push this 5
+    push constant 32
+    add
+    pop temp 0
+    pop pointer 1
+    push temp 0
+    pop that 0
+    push this 3
+    push constant 1
+    add
+    pop this 3
+    push this 5
+    push this 6
+    sub
+    push this 1
+    add
+    push constant 1
+    pop temp 0
+    pop pointer 1
+    push temp 0
+    pop that 0
+    goto L6
+label L7
+label L6
+    push this 5
+    push constant 1
+    sub
+    push constant 18447
+    gt
+    push local 0
+    push constant 1
+    eq
+    not
+    and
+    not
+    if-goto L9
+    push this 3
+    push this 0
+    add
+    push this 5
+    push constant 1
+    sub
+    pop temp 0
+    pop pointer 1
+    push temp 0
+    pop that 0
+    push this 3
+    push constant 1
+    add
+    pop this 3
+    push this 5
+    push this 6
+    sub
+    push this 1
+    add
+    push constant 1
+    pop temp 0
+    pop pointer 1
+    push temp 0
+    pop that 0
+    goto L8
+label L9
+label L8
+    push this 5
+    push constant 1
+    add
+    push constant 22544
+    lt
+    push local 0
+    push constant 1
+    eq
+    not
+    and
+    not
+    if-goto L11
+    push this 3
+    push this 0
+    add
+    push this 5
+    push constant 1
+    add
+    pop temp 0
+    pop pointer 1
+    push temp 0
+    pop that 0
+    push this 3
+    push constant 1
+    add
+    pop this 3
+    push this 5
+    push this 6
+    sub
+    push this 1
+    add
+    push constant 1
+    pop temp 0
+    pop pointer 1
+    push temp 0
+    pop that 0
+    goto L10
+label L11
+label L10
+    push constant 0
+    return

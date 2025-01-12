@@ -1,0 +1,83 @@
+// This file is part of www.nand2tetris.org
+// and the book "The Elements of Computing Systems"
+// by Nisan and Schocken, MIT Press.
+// File name: projects/12/Memory.jack
+/**
+ * This library provides two services: direct access to the computer's main
+ * memory (RAM), and allocation and recycling of memory blocks. The Hack RAM
+ * consists of 32,768 words, each holding a 16-bit binary number.
+ */ 
+class Memory {
+    
+    static Array Ram;
+    static Array freeList;
+    static int length, next;
+
+    /** Initializes the class. */
+    function void init() {
+        let Ram = 0;
+        let next = 0;
+        let length = 1;
+        let freeList = 2048; // head set to start of heap
+        // Initialize first "block" of memory to be entire heap size
+        let freeList[next] = null;
+        let freeList[length] = 14335;
+        return;
+    }
+
+    /** Returns the RAM value at the given address. */
+    function int peek(int address) {
+        return Ram[address];
+    }
+
+    /** Sets the RAM value at the given address to the given value. */
+    function void poke(int address, int value) {
+        let Ram[address] = value;
+        return;
+    }
+
+    /** Finds an available RAM block of the given size and returns
+     *  a reference to its base address. */
+    function int alloc(int size) {
+        var Array currBlock, prevBlock, nextBlock;
+        var int currSize, prevSize;
+
+        let currBlock = freeList;
+        let currSize = currBlock[length];
+        let prevBlock = 0;
+
+        // Loop throug linked list until free node with large enough size is found
+        while(currSize < (size+2)){
+            let prevBlock = currBlock;
+            let prevSize = currSize;
+            let currBlock = currBlock[next];
+            let currSize = currBlock[length];
+        }
+        // Allocate new block of memory and remove from list
+        let nextBlock = currBlock + 2 + size;
+        let nextBlock[length] = currSize - size - 2;
+        let nextBlock[next] = currBlock[next];
+        // Not connected in list anymore, giving to client for obj allocation
+        let currBlock[length] = size;
+        let currBlock[next] = null; 
+
+        // Re-assign freeList pointer if allocation came from head
+        if(prevBlock = 0){
+            let freeList = nextBlock;
+        }else{ // Allocation was in middle of list
+            let prevBlock[next] = nextBlock;
+        }
+        
+        return currBlock + 2;
+    }
+
+    /** De-allocates the given object (cast as an array) by making
+     *  it available for future allocations. */
+    function void deAlloc(Array o) {
+        var Array currBlock;
+        let currBlock = o - 2;
+        let currBlock[next] = freeList;
+        let freeList = currBlock;
+        return;
+    }    
+}
